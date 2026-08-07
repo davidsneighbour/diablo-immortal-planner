@@ -4,9 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-This repository currently contains only `PLAN.md` — no Astro/React project has been scaffolded yet. `PLAN.md` is the authoritative specification: read it in full before doing any work. This file summarizes the constraints that matter most when writing code; it does not replace `PLAN.md`.
+`PLAN.md` is the authoritative specification: read it in full before doing any work. This file summarizes the constraints that matter most when writing code; it does not replace `PLAN.md`.
 
-There are no build/lint/test commands yet because Milestone 0 (project inception: Astro + React + Tailwind + strict TypeScript + test infra + lint/format config) has not been completed. Once scaffolded, update this file with the real commands (dev server, build, test runner, lint, single-test invocation).
+Milestone 0 (project inception) is complete: Astro + React + Tailwind + strict TypeScript, Biome, markdownlint, Vitest, and release tooling are all wired up via the shared `@dnbhq/*` config packages. Milestone 1 (domain model) is next.
+
+## Commands
+
+* `npm run dev` — start the Astro dev server.
+* `npm run build` — production build to `./dist/`.
+* `npm run preview` — preview the production build.
+* `npm run typecheck` — `astro check` (uses `@dnbhq/tsconfig/astro`).
+* `npm run test` — run the Vitest suite once (`vitest run`).
+* `npm run test:watch` — Vitest in watch mode. Use `npx vitest run path/to/file.test.ts` to run a single test file, or `npx vitest run -t "test name"` to filter by test name.
+* `npm run check` / `npm run check:fix` — Biome lint + format check / auto-fix.
+* `npm run lint:markdown` / `npm run lint:markdown:fix` — markdownlint-cli2 over `**/*.{md,mdx}`.
+* `npm run release:dry` — dry-run `release-it` (see Git workflow below for the real release/commit flow).
 
 ## What this project is
 
@@ -16,20 +28,20 @@ Stack: Astro (shell) + React (interactive islands) + TypeScript (strict) + Tailw
 
 ## Non-negotiable architectural rules
 
-- **Domain logic is framework-independent.** Game rules, reset calculations, task dependency resolution, and planner queries live in plain TypeScript modules, not in React components or hooks. React components stay presentational and must be testable-by-proxy — i.e., the logic behind them is testable without rendering React.
-- **Storage is never touched directly by UI.** Enforce the layering `UI → application/domain services → repository/storage interface → IndexedDB implementation`. No component calls IndexedDB/localStorage directly.
-- **Game definitions vs. player state are separate concerns**, never mixed in the same records or files. Game definitions (activities, tasks, events, loot, reset rules, reward tables, requirements, relationships) are static-ish content; player state (characters, completion, progress, inventory, goals, preferences, overrides) is the mutable local database.
-- **Don't persist derived state.** Values like `isDueToday`, `timeUntilReset`, `isEventActive` must be computed from canonical timestamps/definitions at read time, not stored.
-- **Server time, not local time, drives resets.** Diablo Immortal servers have their own timezone and reset time (initial config: `Asia/Bangkok`, daily reset `03:00`). Never compute resets from the user's local midnight, and never hand-roll reset math with raw millisecond arithmetic — use timezone-aware date/time calculations and centralized helpers (`getGameDay()`, `getCurrentResetPeriod()`, `getNextReset()`, `isTaskAvailable()`, `isTaskExpired()`, `isEventActive()`, etc.). The architecture must support other server timezones/reset times later even though only one exists initially.
-- **Task definition ≠ task instance.** A task definition (e.g. "Bounties") is distinct from its occurrence in a specific reset period (e.g. "Bounties for game day 2026-08-08"). Resets must never destroy previous progress — they create a new period while retaining history.
-- **Reset rules are data, not code**, and a single `resetAt` field is not sufficient — a task's availability, completion, reward cap, and claim deadline can each follow independent schedules.
-- **Scope is a first-class concept.** Tasks/goals/progress are scoped to `account`, `server`, or `character` — never assume character-scoped completion applies to other characters unless the task is explicitly account-wide.
-- **Requirements are an extensible rule system**, not a pile of booleans on the entity.
-- **Rewards/resources are structured data**, never plain description strings.
-- **Reward caps are independent of availability.** An activity can remain playable after its tracked rewards are exhausted — the planner must be able to express "available, rewards exhausted" distinctly from "available."
-- **IDs are stable and independent of display names** (e.g. `activity:elder-rift`, `resource:telluric-pearl`). Renaming a label must never break history or references.
-- **Do not hard-code assumptions** about cadence, scope, reward count, reset count, event duration, completion model, availability window, etc. — see the "Important development principle" section of `PLAN.md` for the full list. When an encountered game mechanic doesn't fit the current model, extend the general model (with tests + docs) rather than special-casing it — see `PLAN.md`'s "Unknown mechanics" procedure.
-- **No enterprise/multi-user infrastructure.** No `User` entity, no auth/session/roles/permissions/multi-tenancy — the app implicitly belongs to one player. The domain hierarchy is `Planner → Diablo Immortal account → Server → Characters` (max 5 characters per server, enforced/validated).
+* **Domain logic is framework-independent.** Game rules, reset calculations, task dependency resolution, and planner queries live in plain TypeScript modules, not in React components or hooks. React components stay presentational and must be testable-by-proxy — i.e., the logic behind them is testable without rendering React.
+* **Storage is never touched directly by UI.** Enforce the layering `UI → application/domain services → repository/storage interface → IndexedDB implementation`. No component calls IndexedDB/localStorage directly.
+* **Game definitions vs. player state are separate concerns**, never mixed in the same records or files. Game definitions (activities, tasks, events, loot, reset rules, reward tables, requirements, relationships) are static-ish content; player state (characters, completion, progress, inventory, goals, preferences, overrides) is the mutable local database.
+* **Don't persist derived state.** Values like `isDueToday`, `timeUntilReset`, `isEventActive` must be computed from canonical timestamps/definitions at read time, not stored.
+* **Server time, not local time, drives resets.** Diablo Immortal servers have their own timezone and reset time (initial config: `Asia/Bangkok`, daily reset `03:00`). Never compute resets from the user's local midnight, and never hand-roll reset math with raw millisecond arithmetic — use timezone-aware date/time calculations and centralized helpers (`getGameDay()`, `getCurrentResetPeriod()`, `getNextReset()`, `isTaskAvailable()`, `isTaskExpired()`, `isEventActive()`, etc.). The architecture must support other server timezones/reset times later even though only one exists initially.
+* **Task definition ≠ task instance.** A task definition (e.g. "Bounties") is distinct from its occurrence in a specific reset period (e.g. "Bounties for game day 2026-08-08"). Resets must never destroy previous progress — they create a new period while retaining history.
+* **Reset rules are data, not code**, and a single `resetAt` field is not sufficient — a task's availability, completion, reward cap, and claim deadline can each follow independent schedules.
+* **Scope is a first-class concept.** Tasks/goals/progress are scoped to `account`, `server`, or `character` — never assume character-scoped completion applies to other characters unless the task is explicitly account-wide.
+* **Requirements are an extensible rule system**, not a pile of booleans on the entity.
+* **Rewards/resources are structured data**, never plain description strings.
+* **Reward caps are independent of availability.** An activity can remain playable after its tracked rewards are exhausted — the planner must be able to express "available, rewards exhausted" distinctly from "available."
+* **IDs are stable and independent of display names** (e.g. `activity:elder-rift`, `resource:telluric-pearl`). Renaming a label must never break history or references.
+* **Do not hard-code assumptions** about cadence, scope, reward count, reset count, event duration, completion model, availability window, etc. — see the "Important development principle" section of `PLAN.md` for the full list. When an encountered game mechanic doesn't fit the current model, extend the general model (with tests + docs) rather than special-casing it — see `PLAN.md`'s "Unknown mechanics" procedure.
+* **No enterprise/multi-user infrastructure.** No `User` entity, no auth/session/roles/permissions/multi-tenancy — the app implicitly belongs to one player. The domain hierarchy is `Planner → Diablo Immortal account → Server → Characters` (max 5 characters per server, enforced/validated).
 
 ## Testing expectations
 
@@ -45,12 +57,18 @@ src/data/game/{activities,events,loot,tasks,progression,servers}/
 
 Prefer schemas/types that allow build-time validation of game data (unknown references, duplicate IDs, invalid dependency graphs, invalid scopes should fail at build/dev time, not produce silent runtime bugs).
 
+## Known lint exceptions
+
+`biome.json` disables `correctness/noUnusedVariables` for `**/*.astro` files: Biome only analyzes the Astro frontmatter script, not template interpolation, so a prop destructured in frontmatter and used only in the markup (e.g. `{title}`) is a false positive otherwise.
+
+`markdownlint` flags "Diablo Immortal" and "CLAUDE.md" as sentence-case violations (proper nouns/filenames the shared `title-case-style` rule doesn't know about) and flags `PLAN.md`'s many `#`-level section headings as `MD025`. These are accepted content violations, not configuration errors — do not mass-rewrite `PLAN.md`'s heading structure to silence them; it is the user's authored spec.
+
 ## Git workflow
 
-- Work stays on `main` — this is a single-developer personal project; do not create feature branches.
-- Commit and push to `origin` as work completes, rather than leaving local-only commits.
-- Every commit should reference the GitHub issue it addresses. If no issue exists yet for the work, create one first (using the repo's existing labels/milestones), then commit against it.
-- When a commit finishes the work an issue describes, close it from the commit message (e.g. `Closes #12`) rather than closing it manually afterward.
+* Work stays on `main` — this is a single-developer personal project; do not create feature branches.
+* Commit and push to `origin` as work completes, rather than leaving local-only commits.
+* Every commit should reference the GitHub issue it addresses. If no issue exists yet for the work, create one first (using the repo's existing labels/milestones), then commit against it.
+* When a commit finishes the work an issue describes, close it from the commit message (e.g. `Closes #12`) rather than closing it manually afterward.
 
 ## Milestones and roadmap
 

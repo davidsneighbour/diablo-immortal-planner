@@ -1,6 +1,0 @@
-{
-  "title-case-style": {
-    "case": "sentence",
-    "ignore": ["JavaScript", "Diablo", "Immortal", "TypeScript", "CLAUDE.md"]
-  }
-}

@@ -12,7 +12,7 @@ Manage the background server with `astro dev stop`, `astro dev status`, and `ast
 
 ## Documentation
 
-Full documentation: <https://docs.astro.build>
+Full documentation: [docs.astro.build](https://docs.astro.build)
 
 Consult these guides before working on related tasks:
 
