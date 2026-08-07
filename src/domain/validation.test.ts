@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { Character } from "./character.js";
 import {
   emptyDefinitionSet,
   type GameDefinitionSet,
@@ -7,24 +6,15 @@ import {
 import type { Dependency } from "./dependency.js";
 import { createId } from "./id.js";
 import type { ResetRule } from "./reset-rule.js";
-import type { Server } from "./server.js";
 import type { Task } from "./task.js";
 import { validateDefinitionSet } from "./validation.js";
 
-function baseServer(): Server {
-  return {
-    id: createId("server", "sanctuary-1"),
-    name: "Sanctuary 1",
-    timezone: "Asia/Bangkok",
-    dailyResetTime: "03:00",
-    active: true,
-  };
-}
+const serverId = createId("server", "sanctuary-1");
 
 function baseSet(
   overrides: Partial<GameDefinitionSet> = {},
 ): GameDefinitionSet {
-  return { ...emptyDefinitionSet(), servers: [baseServer()], ...overrides };
+  return { ...emptyDefinitionSet(), ...overrides };
 }
 
 describe("validateDefinitionSet: unique IDs", () => {
@@ -35,91 +25,24 @@ describe("validateDefinitionSet: unique IDs", () => {
     });
   });
 
-  it("rejects two servers sharing the same ID", () => {
-    const server = baseServer();
-    const result = validateDefinitionSet(
-      baseSet({ servers: [server, server] }),
-    );
-    expect(result.valid).toBe(false);
-    expect(result.errors).toContainEqual(
-      expect.objectContaining({ code: "duplicate-id", path: server.id }),
-    );
-  });
-});
-
-describe("validateDefinitionSet: character limits", () => {
-  function characterOn(
-    serverId: Server["id"],
-    slug: string,
-    status: Character["status"] = "active",
-  ): Character {
-    return {
-      id: createId("character", slug),
-      serverId,
-      name: slug,
-      className: "barbarian",
-      level: 1,
-      status,
+  it("rejects two tasks sharing the same ID", () => {
+    const task: Task = {
+      id: createId("task", "daily-bounties"),
+      name: "Daily bounties",
+      scope: "account",
+      activityIds: [],
+      completionModel: { kind: "boolean" },
+      repeatable: true,
     };
-  }
-
-  it("allows exactly five non-archived characters on one server", () => {
-    const server = baseServer();
-    const characters = Array.from({ length: 5 }, (_, index) =>
-      characterOn(server.id, `hero-${index}`),
-    );
-    const result = validateDefinitionSet(
-      baseSet({ servers: [server], characters }),
-    );
-    expect(result.valid).toBe(true);
-  });
-
-  it("rejects a sixth non-archived character on one server", () => {
-    const server = baseServer();
-    const characters = Array.from({ length: 6 }, (_, index) =>
-      characterOn(server.id, `hero-${index}`),
-    );
-    const result = validateDefinitionSet(
-      baseSet({ servers: [server], characters }),
-    );
+    const result = validateDefinitionSet(baseSet({ tasks: [task, task] }));
     expect(result.valid).toBe(false);
     expect(result.errors).toContainEqual(
-      expect.objectContaining({ code: "too-many-characters" }),
+      expect.objectContaining({ code: "duplicate-id", path: task.id }),
     );
-  });
-
-  it("does not count archived characters against the limit", () => {
-    const server = baseServer();
-    const characters = [
-      ...Array.from({ length: 5 }, (_, index) =>
-        characterOn(server.id, `hero-${index}`),
-      ),
-      characterOn(server.id, "retired-hero", "archived"),
-    ];
-    const result = validateDefinitionSet(
-      baseSet({ servers: [server], characters }),
-    );
-    expect(result.valid).toBe(true);
   });
 });
 
 describe("validateDefinitionSet: references", () => {
-  it("rejects a character referencing an unknown server", () => {
-    const character: Character = {
-      id: createId("character", "orphan"),
-      serverId: createId("server", "does-not-exist"),
-      name: "Orphan",
-      className: "barbarian",
-      level: 1,
-      status: "active",
-    };
-    const result = validateDefinitionSet(baseSet({ characters: [character] }));
-    expect(result.valid).toBe(false);
-    expect(result.errors).toContainEqual(
-      expect.objectContaining({ code: "unknown-reference" }),
-    );
-  });
-
   it("rejects a task referencing an unknown activity", () => {
     const task: Task = {
       id: createId("task", "daily-bounties"),
@@ -141,7 +64,7 @@ describe("validateDefinitionSet: reset rules", () => {
   function ruleWith(schedule: ResetRule["schedule"]): ResetRule {
     return {
       id: createId("reset-rule", "test-rule"),
-      serverId: baseServer().id,
+      serverId,
       schedule,
     };
   }

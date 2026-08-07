@@ -1,7 +1,6 @@
 import type { GameDefinitionSet } from "./definition-set.js";
 import type { Id } from "./id.js";
 import type { RequirementSet } from "./requirement.js";
-import { MAX_CHARACTERS_PER_SERVER } from "./server.js";
 import { isValidTimeOfDay } from "./time-of-day.js";
 
 export interface ValidationError {
@@ -16,7 +15,7 @@ export interface ValidationResult {
   readonly errors: readonly ValidationError[];
 }
 
-function findDuplicateIds(
+export function findDuplicateIds(
   ids: readonly Id<string>[],
   entityName: string,
 ): ValidationError[] {
@@ -37,14 +36,6 @@ function findDuplicateIds(
 
 function validateUniqueIds(definitions: GameDefinitionSet): ValidationError[] {
   return [
-    ...findDuplicateIds(
-      definitions.servers.map((e) => e.id),
-      "server",
-    ),
-    ...findDuplicateIds(
-      definitions.characters.map((e) => e.id),
-      "character",
-    ),
     ...findDuplicateIds(
       definitions.activities.map((e) => e.id),
       "activity",
@@ -88,35 +79,7 @@ function validateUniqueIds(definitions: GameDefinitionSet): ValidationError[] {
   ];
 }
 
-function validateCharacterLimits(
-  definitions: GameDefinitionSet,
-): ValidationError[] {
-  const countByServer = new Map<string, number>();
-  for (const character of definitions.characters) {
-    if (character.status === "archived") {
-      continue;
-    }
-    countByServer.set(
-      character.serverId,
-      (countByServer.get(character.serverId) ?? 0) + 1,
-    );
-  }
-  const errors: ValidationError[] = [];
-  for (const [serverId, count] of countByServer) {
-    if (count > MAX_CHARACTERS_PER_SERVER) {
-      errors.push({
-        code: "too-many-characters",
-        message: `Server "${serverId}" has ${count} non-archived characters, exceeding the limit of ${MAX_CHARACTERS_PER_SERVER}`,
-        path: serverId,
-      });
-    }
-  }
-  return errors;
-}
-
 interface ReferenceIndex {
-  readonly serverIds: ReadonlySet<string>;
-  readonly characterIds: ReadonlySet<string>;
   readonly activityIds: ReadonlySet<string>;
   readonly taskIds: ReadonlySet<string>;
   readonly eventIds: ReadonlySet<string>;
@@ -130,8 +93,6 @@ interface ReferenceIndex {
 
 function buildReferenceIndex(definitions: GameDefinitionSet): ReferenceIndex {
   return {
-    serverIds: new Set(definitions.servers.map((e) => e.id)),
-    characterIds: new Set(definitions.characters.map((e) => e.id)),
     activityIds: new Set(definitions.activities.map((e) => e.id)),
     taskIds: new Set(definitions.tasks.map((e) => e.id)),
     eventIds: new Set(definitions.events.map((e) => e.id)),
@@ -162,6 +123,16 @@ function checkRef(
   }
 }
 
+/**
+ * Validates the references a `Requirement` can check purely from
+ * `GameDefinitionSet`. `server` and `character` requirements reference
+ * player-owned IDs and can't be validated here — see
+ * `validatePlayerState` in `src/persistence/`, which cross-checks them
+ * against the loaded `PlayerState`. `item-ownership` needs an
+ * inventory/resource-ownership concept that doesn't exist until
+ * Milestone 11; `manual` requirements are inherently not structurally
+ * checkable.
+ */
 function validateRequirementRefs(
   requirements: RequirementSet | undefined,
   index: ReferenceIndex,
@@ -217,24 +188,6 @@ function validateRequirementRefs(
           errors,
         );
         break;
-      case "server":
-        checkRef(
-          index.serverIds.has(requirement.serverId),
-          "server",
-          requirement.serverId,
-          path,
-          errors,
-        );
-        break;
-      case "character":
-        checkRef(
-          index.characterIds.has(requirement.characterId),
-          "character",
-          requirement.characterId,
-          path,
-          errors,
-        );
-        break;
       case "item-ownership":
         checkRef(
           index.resourceIds.has(requirement.resourceId),
@@ -244,6 +197,8 @@ function validateRequirementRefs(
           errors,
         );
         break;
+      case "server":
+      case "character":
       case "character-level":
       case "time-window":
       case "manual":
@@ -255,16 +210,6 @@ function validateRequirementRefs(
 function validateReferences(definitions: GameDefinitionSet): ValidationError[] {
   const index = buildReferenceIndex(definitions);
   const errors: ValidationError[] = [];
-
-  for (const character of definitions.characters) {
-    checkRef(
-      index.serverIds.has(character.serverId),
-      "server",
-      character.serverId,
-      character.id,
-      errors,
-    );
-  }
 
   for (const activity of definitions.activities) {
     validateRequirementRefs(activity.requirements, index, activity.id, errors);
@@ -380,13 +325,8 @@ function validateReferences(definitions: GameDefinitionSet): ValidationError[] {
   }
 
   for (const resetRule of definitions.resetRules) {
-    checkRef(
-      index.serverIds.has(resetRule.serverId),
-      "server",
-      resetRule.serverId,
-      resetRule.id,
-      errors,
-    );
+    // resetRule.serverId references player-owned Server data and can't be
+    // validated here — see `validatePlayerState`'s cross-check.
     if (resetRule.schedule.kind === "event-specific") {
       checkRef(
         index.eventIds.has(resetRule.schedule.eventId),
@@ -565,17 +505,19 @@ function validateDependencyGraph(
 
 /**
  * Validates a full game-definition set: duplicate IDs, unknown
- * references, invalid dependency graphs, more-than-five-characters per
- * server, and structurally invalid reset configurations. Intended to run
- * at build/dev time so invalid game data fails loudly rather than
- * producing mysterious runtime behaviour.
+ * references, invalid dependency graphs, and structurally invalid reset
+ * configurations. Intended to run at build/dev time so invalid game data
+ * fails loudly rather than producing mysterious runtime behaviour.
+ *
+ * This does not validate anything that depends on player-owned data
+ * (`ResetRule.serverId`, `Requirement` `server`/`character` references) —
+ * see `validatePlayerState` for those cross-checks.
  */
 export function validateDefinitionSet(
   definitions: GameDefinitionSet,
 ): ValidationResult {
   const errors = [
     ...validateUniqueIds(definitions),
-    ...validateCharacterLimits(definitions),
     ...validateReferences(definitions),
     ...validateResetRules(definitions),
     ...validateDependencyGraph(definitions),

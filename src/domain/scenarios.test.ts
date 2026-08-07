@@ -62,12 +62,6 @@ describe("Milestone 1 acceptance scenarios", () => {
         status: "active",
       },
     ];
-    const set = {
-      ...emptyDefinitionSet(),
-      servers: [serverA, serverB],
-      characters,
-    };
-    expect(validateDefinitionSet(set).valid).toBe(true);
     expect(characters.filter((c) => c.serverId === serverA.id)).toHaveLength(2);
     expect(characters.filter((c) => c.serverId === serverB.id)).toHaveLength(1);
   });
@@ -92,32 +86,6 @@ describe("Milestone 1 acceptance scenarios", () => {
     const characterA = createId("character", "barbarian-1");
     const characterB = createId("character", "necromancer-1");
     const characterC = createId("character", "monk-1");
-    const characters: Character[] = [
-      {
-        id: characterA,
-        serverId: serverA.id,
-        name: "Conan",
-        className: "barbarian",
-        level: 60,
-        status: "active",
-      },
-      {
-        id: characterB,
-        serverId: serverA.id,
-        name: "Death",
-        className: "necromancer",
-        level: 55,
-        status: "active",
-      },
-      {
-        id: characterC,
-        serverId: serverA.id,
-        name: "Zen",
-        className: "monk",
-        level: 40,
-        status: "active",
-      },
-    ];
 
     const bountiesTask: Task = {
       id: createId("task", "bounties"),
@@ -160,8 +128,6 @@ describe("Milestone 1 acceptance scenarios", () => {
 
     const set: GameDefinitionSet = {
       ...emptyDefinitionSet(),
-      servers: [serverA],
-      characters,
       resetRules: [dailyResetRule],
       tasks: [accountTask, bountiesTask],
     };
@@ -240,7 +206,6 @@ describe("Milestone 1 acceptance scenarios", () => {
 
     const set: GameDefinitionSet = {
       ...emptyDefinitionSet(),
-      servers: [serverA],
       resetRules: [dailyResetRule],
       tasks: [permanentTask, recurringTask],
     };
@@ -271,7 +236,6 @@ describe("Milestone 1 acceptance scenarios", () => {
 
     const set: GameDefinitionSet = {
       ...emptyDefinitionSet(),
-      servers: [serverA],
       events: [event],
       tasks: [eventTask],
     };
@@ -314,7 +278,6 @@ describe("Milestone 1 acceptance scenarios", () => {
 
     const set: GameDefinitionSet = {
       ...emptyDefinitionSet(),
-      servers: [serverA],
       activities: [activity],
       tasks: [dailyTask, weeklyTask, eventTask],
     };
