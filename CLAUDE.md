@@ -22,6 +22,8 @@ Another real Milestone 1 gap surfaced while designing `PlayerState` and was fixe
 
 Milestone 5 (backup and recovery) is complete: `src/persistence/backup.ts` adds `exportPlayerState`/`importPlayerState` on top of Milestone 4's schema/migration/validation machinery. `PlayerStateExport` wraps a `PlayerState` with its own `format`/`formatVersion`/`exportedAt` — versioned independently of `CURRENT_SCHEMA_VERSION`, since the export wrapper shape and the embedded `PlayerState` shape can evolve separately. `importPlayerState` never throws — a corrupted file, an unrecognized format, a too-new export/schema version, or semantically inconsistent data (reusing `validatePlayerState`, including its optional `GameDefinitionSet` cross-checks) all produce a recoverable `'invalid'` result, exactly like `loadPlayerState`. Game definitions are deliberately excluded from exports (nothing loads/bundles them yet, and PLAN.md permits this when they're bundled with the app). The "destructive-reset workflow" deliverable reuses Milestone 4's `resetPlayerState` directly — no new reset logic was needed, just an end-to-end test chaining export → reset → reload → import → recover against real IndexedDB.
 
+Milestone 6 (game-definition fixture dataset) is complete: `src/data/game/` holds synthetic, clearly-labeled (`confidence: 'unknown'`, a `notes` disclaimer) fixture definitions — activities, tasks, events/phases, loot, rewards/reward caps, reset rules, a progression system, and a dependency — covering every relationship PLAN.md's Milestone 6 and "First development phase" sections call for (daily/weekly/permanent/account/character tasks, a multi-day event with daily and cumulative tasks, one activity progressing three tasks, a reward cap, a task dependency paired with a matching `prerequisite-task` requirement). `getFixtureDefinitionSet()` assembles them into a `GameDefinitionSet`; a test asserts `validateDefinitionSet` passes on it. `src/data/fixtures/demo-player-state.ts` is a companion demo `PlayerState` (explicitly not real save data) with a matching demo server/characters, proving the player-state side end to end: `resolveTaskInstances` (Milestone 3) generates independent per-character progress for the same task, `validatePlayerState` (Milestone 4) passes when cross-checked against the fixture `GameDefinitionSet`, and goals differ independently per character.
+
 ## Commands
 
 * `npm run dev` — start the Astro dev server.
@@ -63,13 +65,9 @@ Domain logic (especially reset/scheduling) needs automated tests with determinis
 
 ## Data layout convention
 
-Game content (definitions, not player data) belongs outside React components, under something like:
+Game content (definitions, not player data) belongs outside React components: `src/data/game/{activities,tasks,events,loot,rewards,reward-caps,reset-rules,progression,dependencies}.ts`, flat files rather than nested directories (proportionate to the current fixture-sized dataset), assembled by `src/data/game/fixture-definitions.ts`'s `getFixtureDefinitionSet()`. Player-state-shaped example data (demo characters/goals/progress — never real save data) lives separately under `src/data/fixtures/`, matching the domain's game-definitions/player-state split.
 
-```text
-src/data/game/{activities,events,loot,tasks,progression,servers}/
-```
-
-Prefer schemas/types that allow build-time validation of game data (unknown references, duplicate IDs, invalid dependency graphs, invalid scopes should fail at build/dev time, not produce silent runtime bugs).
+Prefer schemas/types that allow build-time validation of game data (unknown references, duplicate IDs, invalid dependency graphs, invalid scopes should fail at build/dev time, not produce silent runtime bugs) — enforced today via `validateDefinitionSet`/`validatePlayerState` tests over the fixture data, not a separate build step.
 
 ## Known lint exceptions
 
