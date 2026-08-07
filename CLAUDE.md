@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `PLAN.md` is the authoritative specification: read it in full before doing any work. This file summarizes the constraints that matter most when writing code; it does not replace `PLAN.md`.
 
-Milestone 0 (project inception) is complete: Astro + React + Tailwind + strict TypeScript, Biome, markdownlint, Vitest, and release tooling are all wired up via the shared `@dnbhq/*` config packages. Milestone 1 (domain model) is next.
+Milestone 0 (project inception) is complete: Astro + React + Tailwind + strict TypeScript, Biome, markdownlint, Vitest, and release tooling are all wired up via the shared `@dnbhq/*` config packages.
+
+Milestone 1 (domain model) is complete: framework-independent types live in `src/domain/` (one file per entity — `activity.ts`, `character.ts`, `event.ts`, `goal.ts`, `id.ts`, `progression.ts`, `requirement.ts`, `reset-rule.ts`, `resource.ts`, `reward.ts`, `scope.ts`, `server.ts`, `task.ts`, `task-instance.ts`, `dependency.ts`, `definition-set.ts`, `validation.ts`), each with colocated `*.test.ts`. There is deliberately no barrel `index.ts` — the shared Biome config's `noBarrelFile` rule disallows `export * from`, so import from the specific submodule. Milestone 2 (game clock and reset engine) is next.
 
 ## Commands
 
