@@ -1,0 +1,87 @@
+---
+interface NavItem {
+  href: string;
+  label: string;
+}
+
+const navItems: NavItem[] = [
+  { href: "/", label: "Now" },
+  { href: "/characters", label: "Characters" },
+  { href: "/events", label: "Events" },
+  { href: "/activities", label: "Activities" },
+  { href: "/goals", label: "Goals" },
+  { href: "/data", label: "Data" },
+];
+
+const currentPath = Astro.url.pathname;
+
+function isActive(href: string): boolean {
+  return href === "/" ? currentPath === "/" : currentPath.startsWith(href);
+}
+---
+
+<header class="border-b border-neutral-800">
+	<div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
+		<a
+			href="/"
+			class="rounded-sm text-sm font-semibold tracking-wide text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+		>
+			Diablo Immortal Planner
+		</a>
+
+		<button
+			type="button"
+			class="rounded-md p-2 text-neutral-300 hover:bg-neutral-900 hover:text-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 sm:hidden"
+			aria-expanded="false"
+			aria-controls="primary-nav"
+			data-nav-toggle
+		>
+			<span class="sr-only">Toggle navigation</span>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+			</svg>
+		</button>
+
+		<nav aria-label="Primary">
+			<ul id="primary-nav" data-nav-panel class="hidden w-full flex-col gap-1 sm:flex sm:w-auto sm:flex-row sm:items-center">
+				{
+					navItems.map((item) => (
+						<li>
+							<a
+								href={item.href}
+								aria-current={isActive(item.href) ? 'page' : undefined}
+								class:list={[
+									'block rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400',
+									isActive(item.href)
+										? 'bg-neutral-900 text-amber-400'
+										: 'text-neutral-300 hover:bg-neutral-900 hover:text-neutral-100',
+								]}
+							>
+								{item.label}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+	</div>
+</header>
+
+<script>
+	function initNav(): void {
+		const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+		const panel = document.querySelector<HTMLElement>('[data-nav-panel]');
+		if (!toggle || !panel) {
+			return;
+		}
+		toggle.addEventListener('click', () => {
+			const expanded = toggle.getAttribute('aria-expanded') === 'true';
+			toggle.setAttribute('aria-expanded', String(!expanded));
+			panel.classList.toggle('hidden');
+		});
+	}
+
+	// Runs after the initial load and after every Astro View Transitions
+	// navigation, so the toggle keeps working without a full page reload.
+	document.addEventListener('astro:page-load', initNav);
+</script>
