@@ -2,6 +2,7 @@ import type { GameDefinitionSet } from "./definition-set.js";
 import type { Id } from "./id.js";
 import type { RequirementSet } from "./requirement.js";
 import { MAX_CHARACTERS_PER_SERVER } from "./server.js";
+import { isValidTimeOfDay } from "./time-of-day.js";
 
 export interface ValidationError {
   readonly code: string;
@@ -461,10 +462,13 @@ function validateResetRules(definitions: GameDefinitionSet): ValidationError[] {
         }
         break;
       case "multiple-per-day":
-        if (schedule.timesPerDay <= 0) {
+        if (
+          schedule.times.length === 0 ||
+          schedule.times.some((time) => !isValidTimeOfDay(time))
+        ) {
           errors.push({
             code: "invalid-reset-rule",
-            message: `Reset rule "${resetRule.id}" has non-positive timesPerDay (${schedule.timesPerDay})`,
+            message: `Reset rule "${resetRule.id}" has an invalid or empty times list`,
             path: resetRule.id,
           });
         }
@@ -506,7 +510,6 @@ function validateResetRules(definitions: GameDefinitionSet): ValidationError[] {
         }
         break;
       case "every-game-day":
-      case "seasonal":
       case "event-specific":
       case "none":
       case "manual":
