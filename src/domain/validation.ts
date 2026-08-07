@@ -271,23 +271,6 @@ function validateReferences(definitions: GameDefinitionSet): ValidationError[] {
   }
 
   for (const task of definitions.tasks) {
-    if (task.scope.type === "server") {
-      checkRef(
-        index.serverIds.has(task.scope.serverId),
-        "server",
-        task.scope.serverId,
-        task.id,
-        errors,
-      );
-    } else if (task.scope.type === "character") {
-      checkRef(
-        index.characterIds.has(task.scope.characterId),
-        "character",
-        task.scope.characterId,
-        task.id,
-        errors,
-      );
-    }
     for (const activityId of task.activityIds) {
       checkRef(
         index.activityIds.has(activityId),

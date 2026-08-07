@@ -8,7 +8,7 @@ import type {
 } from "./id.js";
 import type { GameDefinitionMetadata } from "./metadata.js";
 import type { RequirementSet } from "./requirement.js";
-import type { Scope } from "./scope.js";
+import type { ScopeKind } from "./scope.js";
 
 /**
  * How a task's progress is represented and what "done" means for it.
@@ -29,15 +29,18 @@ export type CompletionModel =
   | { readonly kind: "manual" };
 
 /**
- * A task definition: something that can be progressed or completed. Scope
- * (account/server/character) is first-class — see `Scope`. Availability,
+ * A task definition: something that can be progressed or completed.
+ * `scope` says *who independently tracks it* (account/server/character)
+ * without binding to one concrete target — see `ScopeKind`. Concrete
+ * targets are resolved per server/character when generating
+ * `TaskInstance`s (see `src/planner/task-instances.ts`). Availability,
  * completion, and reward-cap resets are independent schedules; a task is
  * not required to share one `resetAt` across all three.
  */
 export interface Task extends GameDefinitionMetadata {
   readonly id: TaskId;
   readonly name: string;
-  readonly scope: Scope;
+  readonly scope: ScopeKind;
   /** The activity/activities that progress this task. A task may draw progress from more than one activity. */
   readonly activityIds: readonly ActivityId[];
   readonly completionModel: CompletionModel;

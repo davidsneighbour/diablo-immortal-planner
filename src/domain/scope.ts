@@ -11,6 +11,16 @@ export type Scope =
   | { readonly type: "server"; readonly serverId: ServerId }
   | { readonly type: "character"; readonly characterId: CharacterId };
 
+/**
+ * The kind of scope a *task definition* uses, without binding to one
+ * concrete server/character. A definition like "Daily Bounties" isn't
+ * about one specific character — it's a pattern every character
+ * independently tracks. The concrete target only exists once resolved
+ * into player state (see `Scope` on `TaskInstance`, `Goal`, and
+ * `ProgressionState`).
+ */
+export type ScopeKind = Scope["type"];
+
 export function isAccountScope(scope: Scope): scope is { type: "account" } {
   return scope.type === "account";
 }

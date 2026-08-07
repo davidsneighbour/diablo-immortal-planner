@@ -124,7 +124,7 @@ describe("validateDefinitionSet: references", () => {
     const task: Task = {
       id: createId("task", "daily-bounties"),
       name: "Daily bounties",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [createId("activity", "does-not-exist")],
       completionModel: { kind: "boolean" },
       repeatable: true,
@@ -180,7 +180,7 @@ describe("validateDefinitionSet: dependency graph", () => {
     return {
       id: createId("task", slug),
       name: slug,
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [],
       completionModel: { kind: "boolean" },
       repeatable: false,

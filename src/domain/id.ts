@@ -46,6 +46,21 @@ export function isIdOfKind<Kind extends string>(
   return idKind(id) === kind;
 }
 
+/**
+ * Converts an arbitrary string into a lowercase kebab-case slug suitable
+ * for `createId`, by lowercasing and collapsing every run of
+ * non-alphanumeric characters into a single "-". Intended for composing
+ * deterministic IDs from other IDs/keys (e.g. a `TaskInstance` id derived
+ * from a task id, scope, and period key), not for turning display names
+ * into IDs — see the "IDs" section of `PLAN.md`.
+ */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 // Entity ID aliases. Centralized here (rather than in each entity's own
 // module) so that types needing IDs of multiple kinds — e.g. `Scope`
 // referencing both `ServerId` and `CharacterId` — don't create import

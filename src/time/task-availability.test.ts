@@ -26,7 +26,7 @@ function baseTask(overrides: Partial<Task> = {}): Task {
   return {
     id: createId("task", "daily-bounties"),
     name: "Daily bounties",
-    scope: { type: "account" },
+    scope: "account",
     activityIds: [],
     completionModel: { kind: "boolean" },
     repeatable: true,

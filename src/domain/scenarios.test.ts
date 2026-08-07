@@ -82,7 +82,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const accountTask: Task = {
       id: createId("task", "account-login"),
       name: "Daily login",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [],
       completionModel: { kind: "boolean" },
       repeatable: true,
@@ -122,7 +122,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const bountiesTask: Task = {
       id: createId("task", "bounties"),
       name: "Bounties",
-      scope: { type: "character", characterId: characterA },
+      scope: "character",
       activityIds: [],
       completionModel: { kind: "counter", target: 3 },
       repeatable: true,
@@ -219,7 +219,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const permanentTask: Task = {
       id: createId("task", "storyline-chapter-1"),
       name: "Storyline: Chapter 1",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [],
       completionModel: { kind: "boolean" },
       repeatable: false,
@@ -230,7 +230,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const recurringTask: Task = {
       id: createId("task", "daily-bounties"),
       name: "Daily bounties",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [],
       completionModel: { kind: "counter", target: 3 },
       repeatable: true,
@@ -261,7 +261,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const eventTask: Task = {
       id: createId("task", "shadow-invasion-daily"),
       name: "Shadow Invasion: daily objective",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [],
       completionModel: { kind: "boolean" },
       repeatable: true,
@@ -290,7 +290,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const dailyTask: Task = {
       id: createId("task", "daily-elder-rift"),
       name: "Run an Elder Rift",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [activityId],
       completionModel: { kind: "counter", target: 1 },
       repeatable: true,
@@ -298,7 +298,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const weeklyTask: Task = {
       id: createId("task", "weekly-elder-rift"),
       name: "Run three Elder Rifts",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [activityId],
       completionModel: { kind: "counter", target: 3 },
       repeatable: true,
@@ -306,7 +306,7 @@ describe("Milestone 1 acceptance scenarios", () => {
     const eventTask: Task = {
       id: createId("task", "event-elder-rift"),
       name: "Complete Elder Rift for event X",
-      scope: { type: "account" },
+      scope: "account",
       activityIds: [activityId],
       completionModel: { kind: "boolean" },
       repeatable: false,
