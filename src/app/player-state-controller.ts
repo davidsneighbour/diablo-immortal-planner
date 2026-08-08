@@ -35,15 +35,18 @@ export type PlayerStateSnapshot =
 export class PlayerStateController {
   private readonly storage: DocumentStorage<unknown>;
   private readonly gameDefinitions: GameDefinitionSet | undefined;
+  private readonly initialSeed: PlayerState | undefined;
   private snapshot: PlayerStateSnapshot;
   private readonly listeners: Set<() => void>;
 
   constructor(
     storage: DocumentStorage<unknown>,
     gameDefinitions?: GameDefinitionSet,
+    initialSeed?: PlayerState,
   ) {
     this.storage = storage;
     this.gameDefinitions = gameDefinitions;
+    this.initialSeed = initialSeed;
     this.snapshot = { status: "loading", state: createEmptyPlayerState() };
     this.listeners = new Set();
   }
@@ -67,6 +70,11 @@ export class PlayerStateController {
         state: createEmptyPlayerState(),
         errors: result.errors,
       });
+      return;
+    }
+    if (result.status === "empty" && this.initialSeed) {
+      await this.storage.save(this.initialSeed);
+      this.setSnapshot({ status: "ready", state: this.initialSeed });
       return;
     }
     this.setSnapshot({ status: "ready", state: result.state });

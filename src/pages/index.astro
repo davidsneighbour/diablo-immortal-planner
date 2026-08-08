@@ -1,11 +1,19 @@
 ---
+import DemoDataBanner from "../components/DemoDataBanner.astro";
+import { NowDashboard } from "../components/now/NowDashboard.js";
 import Layout from "../layouts/Layout.astro";
 ---
 
 <Layout title="Now — Diablo Immortal Planner">
 	<h1 class="text-2xl font-semibold text-neutral-100">Now</h1>
 	<p class="mt-2 max-w-2xl text-neutral-400">
-		The main dashboard: server time, the current game day, time until reset, active events, and outstanding tasks
-		grouped by urgency. Built out in Milestone 9, once character management (Milestone 8) exists to drive it.
+		Server time, the current game day, time until reset, active events, and outstanding tasks grouped by urgency —
+		separately for your account and for each character.
 	</p>
+	<div class="mt-4">
+		<DemoDataBanner />
+	</div>
+	<div class="mt-6">
+		<NowDashboard client:only="react" />
+	</div>
 </Layout>
